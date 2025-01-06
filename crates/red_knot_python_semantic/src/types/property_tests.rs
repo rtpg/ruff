@@ -109,7 +109,16 @@ fn arbitrary_type(g: &mut Gen, size: u32) -> Ty {
                     .map(|_| arbitrary_type(g, size - 1))
                     .collect(),
                 neg: (0..*g.choose(&[0, 1, 2]).unwrap())
-                    .map(|_| arbitrary_type(g, size - 1))
+                    .filter_map(|_| {
+                        let ty = arbitrary_type(g, size - 1);
+                        // HACK: we don't have Any or Unknown in negative
+                        // branches
+                        if matches!(ty, Ty::Any | Ty::Unknown) {
+                            None
+                        } else {
+                            Some(ty)
+                        }
+                    })
                     .collect(),
             },
             _ => unreachable!(),
